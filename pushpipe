@@ -137,7 +137,7 @@ def message(token, user, WORDS, DEV, TITLE, URL, UTITLE, PRIORITY):
 		quit()
 
 	response=conn.getresponse()
-	if response.status is 200:
+	if response.status == 200:
 		quit()
 	else:
 		print("Oops. You bwoke it.")
