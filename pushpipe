@@ -17,6 +17,8 @@ import os, sys, urllib, http.client, configparser, textwrap, argparse
 settings = os.path.expanduser("~/.pushpipe")
 config = configparser.ConfigParser()
 conn = http.client.HTTPSConnection("api.pushover.net:443")
+retrySec = 60
+expireSec = 86400
 
 def main():
 	parser = argparse.ArgumentParser(description='Pushover Pipe: Sends messages to Pushover device from the command line. Example: `make ; sudo make install ; pushpipe --title "make" -m "All done compiling."`', prog='pushpipe')
@@ -33,7 +35,7 @@ def main():
 		action='store', dest='DEV', default=None,
 		help='Device name to receive message. Default sends to all devices.')
 	parser.add_argument('--title',
-		action='store', dest='TITLE', default='Pushover_Pipe',
+		action='store', dest='TITLE', default='Tesla',
 		help='Title or application name. Default is Pushover_Pipe')
 	parser.add_argument('--url',
 		action='store', dest='URL', default=None,
@@ -63,7 +65,9 @@ def message(token, user, WORDS, DEV, TITLE, URL, UTITLE, PRIORITY):
 	if PRIORITY is None:
 		PRI2=0
 	elif PRIORITY is not None:
-		if (PRIORITY in ["High","high","Hi","HI","hi","H","h"]):
+		if (PRIORITY in ["Emergency","emergency","E","e"]):
+			PRI2=2
+		elif (PRIORITY in ["High","high","Hi","HI","hi","H","h"]):
 			PRI2=1
 		elif (PRIORITY in ["Low","low","Lo","LO","lo","L","l"]):
 			PRI2=-1
@@ -78,6 +82,9 @@ def message(token, user, WORDS, DEV, TITLE, URL, UTITLE, PRIORITY):
 				"title": TITLE,
 				"message": WORDS,
 				"priority": PRI2,
+				"retry": retrySec,
+				"expire": expireSec,
+                                "html": 1
 			}), { "Content-type": "application/x-www-form-urlencoded" })
 
 	elif DEV is not None and URL is None:
@@ -89,6 +96,9 @@ def message(token, user, WORDS, DEV, TITLE, URL, UTITLE, PRIORITY):
 				"message": WORDS,
 				"device": DEV,
 				"priority": PRI2,
+				"retry": retrySec,
+				"expire": expireSec,
+                                "html": 1
 			}), { "Content-type": "application/x-www-form-urlencoded" })
 
 	elif DEV is None and URL is not None:
@@ -101,6 +111,9 @@ def message(token, user, WORDS, DEV, TITLE, URL, UTITLE, PRIORITY):
 				"url_title": UTITLE,
 				"message": WORDS,
 				"priority": PRI2,
+				"retry": retrySec,
+				"expire": expireSec,
+                                "html": 1
 			}), { "Content-type": "application/x-www-form-urlencoded" })
 
 	elif DEV is not None and URL is not None:
@@ -114,6 +127,9 @@ def message(token, user, WORDS, DEV, TITLE, URL, UTITLE, PRIORITY):
 				"message": WORDS,
 				"device": DEV,
 				"priority": PRI2,
+				"retry": retrySec,
+				"expire": expireSec,
+                                "html": 1
 			}), { "Content-type": "application/x-www-form-urlencoded" })
 
 	else:
@@ -121,7 +137,7 @@ def message(token, user, WORDS, DEV, TITLE, URL, UTITLE, PRIORITY):
 		quit()
 
 	response=conn.getresponse()
-	if response.status == 200:
+	if response.status is 200:
 		quit()
 	else:
 		print("Oops. You bwoke it.")
